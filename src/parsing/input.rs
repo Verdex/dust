@@ -2,6 +2,7 @@
 use std::str::{CharIndices};
 
 use super::parse_error::{ParseError};
+use super::ast::*;
 
 pub struct Input<'a> {
     data : &'a [(usize, char)] 
@@ -21,6 +22,17 @@ impl<'a> Input<'a> {
         Ok(())
     }
 
+    fn clear_whitespace(&mut self) {
+        let mut d = self.data;
+        loop {
+            match d {
+                [] => break,
+                [(_, x), rest @ ..] if x.is_whitespace() => d = rest,
+                _ => break,
+            }
+        }
+        self.data = d
+    }
 }
 
 #[cfg(test)]
