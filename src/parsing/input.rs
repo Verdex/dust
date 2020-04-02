@@ -9,7 +9,7 @@ pub struct Input<'a> {
 }
 
 impl<'a> Input<'a> {
-    fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
+    pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
         let mut d = self.data;
         for c in s.chars() {
             match d {
@@ -22,7 +22,7 @@ impl<'a> Input<'a> {
         Ok(())
     }
 
-    fn clear_whitespace(&mut self) {
+    pub fn clear(&mut self) { // TODO needs to clear comments as well
         let mut d = self.data;
         loop {
             match d {
@@ -32,6 +32,35 @@ impl<'a> Input<'a> {
             }
         }
         self.data = d
+    }
+
+    pub fn parse_symbol(&mut self) -> Result<String, ParseError> {
+        let mut d = self.data;
+        let mut cs = vec![];
+
+        match d {
+            [] => return Err(ParseError::EndOfFile("parse_symbol".to_string())),
+            [(_, x), rest @ ..] if x.is_alphabetic() || *x == '_' => {
+                d = rest;
+                cs.push(x);
+            },
+            [(i, x), ..] => return Err(ParseError::ErrorAt(*i, format!("Encountered {} in parse_symbol", x))),
+        }
+
+        loop {
+            match d {
+                [] => return Err(ParseError::EndOfFile("parse_symbol".to_string())),
+                [(_, x), rest @ ..] if x.is_alphanumeric() || *x == '_' => {
+                    d = rest;
+                    cs.push(x);
+                },
+                [(_, x), ..] => break,
+            }
+        }
+
+        self.data = d;
+
+        Ok(cs.into_iter().collect::<String>())
     }
 }
 
@@ -47,4 +76,12 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn should_parse_symbol() -> Result<(), ParseError> {
+        let mut input = Input { data: &"_Symbol_123 ".char_indices().collect::<Vec<(usize, char)>>() };
+        let symbol = input.parse_symbol()?;
+        assert_eq!( symbol, "_Symbol_123" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+        Ok(())
+    }
 }
