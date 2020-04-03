@@ -7,16 +7,78 @@ impl<'a> Input<'a> {
     fn parse_use(&mut self) -> Result<Use, ParseError> {
         self.expect("use")?;
 
+        let mut namespace = vec![];
+        let mut imports = vec![];
+
+        namespace.push(self.parse_symbol()?);
+
         loop {
-            // check symbol
-            // check ::
+            self.expect("::")?;
+            if matches!(self.expect("{"), Ok(_)) {
+                break;
+            }
+            namespace.push(self.parse_symbol()?);
         }
         
-        // check {
-        // symbol list
-        // maybe *
-        // check }
+        loop {
+            if matches!(self.expect("}"), Ok(_)) {
+                break;
+            }
+            if matches!(self.expect("*"), Ok(_)) {
+                imports.push(Import::Everything);
+            }
+            else {
+                imports.push(Import::Item(self.parse_symbol()?));
+            }
+            match self.expect(",") {
+                Ok(_) => continue,
+                _ => (),
+            }
+        }
 
-        Err(ParseError::EndOfFile(format!("blarg")))
+        self.expect(";")?;
+
+        Ok( Use { imports, namespace } )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_parse_empty_use() -> Result<(), ParseError> {
+        let mut input = Input { data: &"use symb::{};".char_indices().collect::<Vec<(usize, char)>>() };
+        let u = input.parse_use()?;
+        assert_eq!( u.imports.len(), 0 );
+        assert_eq!( u.namespace.len(), 1);
+        assert_eq!( u.namespace[0], "symb" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
+        Ok(())
+    }
+    
+    #[test]
+    fn should_parse_use_with_everything() -> Result<(), ParseError> {
+        let mut input = Input { data: &"use symb::{*};".char_indices().collect::<Vec<(usize, char)>>() };
+        let u = input.parse_use()?;
+        assert_eq!( u.imports.len(), 1 );
+        assert!( matches!( u.imports[0], Import::Everything ) );
+        assert_eq!( u.namespace.len(), 1);
+        assert_eq!( u.namespace[0], "symb" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_use_with_everythings() -> Result<(), ParseError> {
+        let mut input = Input { data: &"use symb::{*, *};".char_indices().collect::<Vec<(usize, char)>>() };
+        let u = input.parse_use()?;
+        assert_eq!( u.imports.len(), 2 );
+        assert!( matches!( u.imports[0], Import::Everything ) );
+        assert!( matches!( u.imports[1], Import::Everything ) );
+        assert_eq!( u.namespace.len(), 1);
+        assert_eq!( u.namespace[0], "symb" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
+        Ok(())
     }
 }

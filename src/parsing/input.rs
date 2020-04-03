@@ -5,7 +5,7 @@ use super::parse_error::{ParseError};
 use super::ast::*;
 
 pub struct Input<'a> {
-    data : &'a [(usize, char)] 
+    pub data : &'a [(usize, char)] 
 }
 
 impl<'a> Input<'a> {
