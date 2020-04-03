@@ -6,7 +6,6 @@ use super::input::Input;
 impl<'a> Input<'a> {
     fn parse_use(&mut self) -> Result<Use, ParseError> {
         self.expect("use")?;
-        self.clear();
 
         loop {
             // check symbol

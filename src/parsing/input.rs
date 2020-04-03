@@ -10,6 +10,8 @@ pub struct Input<'a> {
 
 impl<'a> Input<'a> {
     pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
+        self.clear();
+
         let mut d = self.data;
         for c in s.chars() {
             match d {
@@ -22,7 +24,7 @@ impl<'a> Input<'a> {
         Ok(())
     }
 
-    pub fn clear(&mut self) { // TODO needs to clear comments as well
+    fn clear(&mut self) { // TODO needs to clear comments as well
         let mut d = self.data;
         loop {
             match d {
@@ -35,6 +37,8 @@ impl<'a> Input<'a> {
     }
 
     pub fn parse_symbol(&mut self) -> Result<String, ParseError> {
+        self.clear();
+
         let mut d = self.data;
         let mut cs = vec![];
 
