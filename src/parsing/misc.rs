@@ -81,4 +81,63 @@ mod test {
         assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
         Ok(())
     }
+
+    #[test]
+    fn should_parse_use_with_long_namespace() -> Result<(), ParseError> {
+        let mut input = Input { data: &"use symb::other::some::{*, *};".char_indices().collect::<Vec<(usize, char)>>() };
+        let u = input.parse_use()?;
+        assert_eq!( u.imports.len(), 2 );
+        assert!( matches!( u.imports[0], Import::Everything ) );
+        assert!( matches!( u.imports[1], Import::Everything ) );
+        assert_eq!( u.namespace.len(), 3);
+        assert_eq!( u.namespace[0], "symb" );
+        assert_eq!( u.namespace[1], "other" );
+        assert_eq!( u.namespace[2], "some" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_use_with_everything_and_item() -> Result<(), ParseError> {
+        let mut input = Input { data: &"use symb::other::some::{*, item};".char_indices().collect::<Vec<(usize, char)>>() };
+        let u = input.parse_use()?;
+        assert_eq!( u.imports.len(), 2 );
+        assert!( matches!( u.imports[0], Import::Everything ) );
+        assert!( matches!( u.imports[1], Import::Item(_) ) );
+        match &u.imports[1] {
+            Import::Item(item) if item == "item" => (),
+            _ => assert!(false),
+        }
+        
+        assert_eq!( u.namespace.len(), 3);
+        assert_eq!( u.namespace[0], "symb" );
+        assert_eq!( u.namespace[1], "other" );
+        assert_eq!( u.namespace[2], "some" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_use_with_items() -> Result<(), ParseError> {
+        let mut input = Input { data: &"use symb::other::some::{item1, item2};".char_indices().collect::<Vec<(usize, char)>>() };
+        let u = input.parse_use()?;
+        assert_eq!( u.imports.len(), 2 );
+        assert!( matches!( u.imports[0], Import::Item(_) ) );
+        assert!( matches!( u.imports[1], Import::Item(_) ) );
+        match &u.imports[0] {
+            Import::Item(item) if item == "item1" => (),
+            _ => assert!(false),
+        }
+        match &u.imports[1] {
+            Import::Item(item) if item == "item2" => (),
+            _ => assert!(false),
+        }
+        
+        assert_eq!( u.namespace.len(), 3);
+        assert_eq!( u.namespace[0], "symb" );
+        assert_eq!( u.namespace[1], "other" );
+        assert_eq!( u.namespace[2], "some" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), "".to_string() ); 
+        Ok(())
+    }
 }
