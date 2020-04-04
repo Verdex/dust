@@ -20,7 +20,7 @@ pub struct TypeDef {
 }
 
 #[derive(Debug)]
-pub enum TypeConstructor {
+pub struct TypeConstructor {
     name : String,
     types : Vec<Type>,
 }
