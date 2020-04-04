@@ -16,14 +16,21 @@ pub struct Module {
 pub struct TypeDef {
     name : String,
     type_params : Vec<String>,
-    type_structure : TypeStruct,
+    type_constructors : Vec<TypeConstructor>,
 }
 
 #[derive(Debug)]
-pub enum TypeStruct {
+pub enum TypeConstructor {
+    name : String,
+    types : Vec<Type>,
+}
+
+#[derive(Debug)]
+pub enum Type {
     Simple(String),
-    Indexed(String, Vec<TypeStruct>),
-    Arrow { input : Box<TypeStruct>, output : Box<TypeStruct> },
+    Indexed(String, Vec<Type>),
+    Arrow { input : Box<Type>, output : Box<Type> },
+    Tuple(Vec<Type>),
 }
 
 #[derive(Debug)]
