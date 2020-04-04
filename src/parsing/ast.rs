@@ -14,11 +14,22 @@ pub struct Module {
 
 #[derive(Debug)]
 pub struct TypeDef {
-    
+    name : String,
+    type_params : Vec<String>,
+    type_structure : TypeStruct,
 }
 
 #[derive(Debug)]
-pub struct FunDef {}
+pub enum TypeStruct {
+    Simple(String),
+    Indexed(String, Vec<TypeStruct>),
+    Arrow { input : Box<TypeStruct>, output : Box<TypeStruct> },
+}
+
+#[derive(Debug)]
+pub struct FunDef {
+
+}
 
 #[derive(Debug)]
 pub struct Use {
