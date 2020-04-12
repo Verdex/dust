@@ -14,7 +14,7 @@ impl<'a> Input<'a> {
     }
 
     pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
-        self.clear();
+        self.clear()?;
 
         let mut d = self.data;
         for c in s.chars() {
@@ -28,20 +28,32 @@ impl<'a> Input<'a> {
         Ok(())
     }
 
-    fn clear(&mut self) { // TODO needs to clear comments as well
+    fn clear(&mut self) -> Result<(), ParseError> { 
         let mut d = self.data;
+        let mut comment = 0;
         loop {
             match d {
+                [] if comment > 0 => return Err(ParseError::EndOfFile("Expected end of comment but found end of file".to_string())),
                 [] => break,
+                [(_, x), rest @ ..] if comment > 0 => d = rest,
+                [(_, '/'), (_, '*'), rest @ ..] => {
+                    comment += 1;
+                    d = rest; 
+                },
+                [(_, '*'), (_, '/'), rest @ ..] if comment > 0 => {
+                    comment -= 1;
+                    d = rest; 
+                }, 
                 [(_, x), rest @ ..] if x.is_whitespace() => d = rest,
                 _ => break,
             }
         }
-        self.data = d
+        self.data = d;
+        Ok(())
     }
 
     pub fn parse_symbol(&mut self) -> Result<String, ParseError> {
-        self.clear();
+        self.clear()?;
 
         let mut d = self.data;
         let mut cs = vec![];
