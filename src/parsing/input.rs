@@ -5,10 +5,14 @@ use super::parse_error::{ParseError};
 use super::ast::*;
 
 pub struct Input<'a> {
-    pub data : &'a [(usize, char)] 
+    data : &'a [(usize, char)] 
 }
 
 impl<'a> Input<'a> {
+    pub fn new(input : &'a [(usize, char)] ) -> Input<'a> { 
+        Input { data: input }
+    }
+
     pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
         self.clear();
 
