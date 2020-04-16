@@ -179,6 +179,12 @@ impl<'a> Input<'a> {
             }
         }
 
+        match d {
+            [] => return Err(ParseError::EndOfFile("parse_string".to_string())),
+            [(_, '"'), rest @ ..] => d = rest,
+            [(i, x), ..] => return Err(ParseError::ErrorAt(*i, format!("Encountered {} at the ending of parse_string", x))),
+        }
+
         self.data = d;
 
         Ok(cs.into_iter().collect::<String>())
