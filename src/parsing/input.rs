@@ -130,15 +130,50 @@ impl<'a> Input<'a> {
             [(i, x), ..] => return Err(ParseError::ErrorAt(*i, format!("Encountered {} at the beginning of parse_string", x))),
         }
 
+        let mut escape = false;
         loop {
             match d {
                 [] => return Err(ParseError::EndOfFile("parse_string".to_string())),
+                [(_, '\\'), rest @ ..] if escape => {
+                    escape = false;
+                    d = rest;
+                    cs.push('\\');
+                },
+                [(_, 'n'), rest @ ..] if escape => {
+                    escape = false;
+                    d = rest;
+                    cs.push('\n');
+                },
+                [(_, 'r'), rest @ ..] if escape => {
+                    escape = false;
+                    d = rest;
+                    cs.push('\r');
+                },
+                [(_, '0'), rest @ ..] if escape => {
+                    escape = false;
+                    d = rest;
+                    cs.push('\0');
+                },
+                [(_, 't'), rest @ ..] if escape => {
+                    escape = false;
+                    d = rest;
+                    cs.push('\t');
+                },
+                [(_, '"'), rest @ ..] if escape => {
+                    escape = false;
+                    d = rest;
+                    cs.push('"');
+                },
+                [(i, x), rest @ ..] if escape => return Err(ParseError::At(*i, format!("Encountered unknown escape character {}", x))),
+                [(_, '\\'), rest @ ..] => {
+                    escape = true;
+                    d = rest;
+                },
                 [(_, '"'), rest @ ..] => break,
                 [(_, x), rest @ ..] => {
                     d = rest;
                     cs.push(x);
                 },
-                // TODO escape "
             }
         }
 
