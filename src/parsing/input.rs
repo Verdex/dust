@@ -305,4 +305,14 @@ mod test {
         assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
         Ok(())
     }
+
+    #[test]
+    fn should_parse_string_with_whitespace() -> Result<(), ParseError> {
+        let mut input = Input { data: &r#" /* */ " string with 123
+whitespace " "#.char_indices().collect::<Vec<(usize, char)>>() };
+        let number = input.parse_string()?;
+        assert_eq!( number, " string with 123\nwhitespace " );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+        Ok(())
+    }
 }
