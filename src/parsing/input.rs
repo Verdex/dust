@@ -315,4 +315,13 @@ whitespace " "#.char_indices().collect::<Vec<(usize, char)>>() };
         assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
         Ok(())
     }
+
+    #[test]
+    fn should_parse_string_with_escapes() -> Result<(), ParseError> {
+        let mut input = Input { data: &r#" /* */ "\\ \0 \n \r \t \"" "#.char_indices().collect::<Vec<(usize, char)>>() };
+        let number = input.parse_string()?;
+        assert_eq!( number, "\\ \0 \n \r \t \"" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+        Ok(())
+    }
 }
