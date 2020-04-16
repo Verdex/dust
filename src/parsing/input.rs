@@ -13,21 +13,6 @@ impl<'a> Input<'a> {
         Input { data: input }
     }
 
-    pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
-        self.clear()?;
-
-        let mut d = self.data;
-        for c in s.chars() {
-            match d {
-                [] => return Err(ParseError::EndOfFile(format!("Expected {} in {}", c, s))),
-                [(_, x), rest @ ..] if *x == c => d = rest,
-                [(i, x), ..] => return Err(ParseError::ErrorAt(*i, format!("Expected {} in {} but found {}", c, s, x))),
-            }
-        }
-        self.data = d;
-        Ok(())
-    }
-
     fn clear(&mut self) -> Result<(), ParseError> { 
         let mut d = self.data;
         let mut comment = 0;
@@ -46,6 +31,21 @@ impl<'a> Input<'a> {
                 [(_, x), rest @ ..] if comment > 0 => d = rest,
                 [(_, x), rest @ ..] if x.is_whitespace() => d = rest,
                 _ => break,
+            }
+        }
+        self.data = d;
+        Ok(())
+    }
+
+    pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
+        self.clear()?;
+
+        let mut d = self.data;
+        for c in s.chars() {
+            match d {
+                [] => return Err(ParseError::EndOfFile(format!("Expected {} in {}", c, s))),
+                [(_, x), rest @ ..] if *x == c => d = rest,
+                [(i, x), ..] => return Err(ParseError::ErrorAt(*i, format!("Expected {} in {} but found {}", c, s, x))),
             }
         }
         self.data = d;
