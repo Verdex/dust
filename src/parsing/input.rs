@@ -119,6 +119,33 @@ impl<'a> Input<'a> {
 
         Ok(cs.into_iter().collect::<String>())
     }
+
+    pub fn parse_string(&mut self) -> Result<String, ParseError> {
+        let mut d = self.data;
+        let mut cs = vec![];
+
+        match d {
+            [] => return Err(ParseError::EndOfFile("parse_string".to_string())),
+            [(_, '"'), rest @ ..] => d = rest,
+            [(i, x), ..] => return Err(ParseError::ErrorAt(*i, format!("Encountered {} at the beginning of parse_string", x))),
+        }
+
+        loop {
+            match d {
+                [] => return Err(ParseError::EndOfFile("parse_string".to_string())),
+                [(_, '"'), rest @ ..] => break,
+                [(_, x), rest @ ..] => {
+                    d = rest;
+                    cs.push(x);
+                },
+                // TODO escape "
+            }
+        }
+
+        self.data = d;
+
+        Ok(cs.into_iter().collect::<String>())
+    }
 }
 
 #[cfg(test)]
