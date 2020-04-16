@@ -121,6 +121,8 @@ impl<'a> Input<'a> {
     }
 
     pub fn parse_string(&mut self) -> Result<String, ParseError> {
+        self.clear()?;
+
         let mut d = self.data;
         let mut cs = vec![];
 
@@ -164,7 +166,7 @@ impl<'a> Input<'a> {
                     d = rest;
                     cs.push('"');
                 },
-                [(i, x), rest @ ..] if escape => return Err(ParseError::At(*i, format!("Encountered unknown escape character {}", x))),
+                [(i, x), rest @ ..] if escape => return Err(ParseError::ErrorAt(*i, format!("Encountered unknown escape character {}", x))),
                 [(_, '\\'), rest @ ..] => {
                     escape = true;
                     d = rest;
@@ -172,7 +174,7 @@ impl<'a> Input<'a> {
                 [(_, '"'), rest @ ..] => break,
                 [(_, x), rest @ ..] => {
                     d = rest;
-                    cs.push(x);
+                    cs.push(*x);
                 },
             }
         }
