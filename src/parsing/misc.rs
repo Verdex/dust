@@ -327,4 +327,46 @@ mod test {
         assert_eq!( t1_name, "alpha" );
         Ok(())
     }
+
+    #[test]
+    fn should_parse_arrow_type() -> Result<(), ParseError> {
+        let i = "alpha -> beta ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        let (input, output) = match u {
+            Type::Arrow { input, output } => (input, output), 
+            _ => panic!("should be arrow type"),
+        };
+
+        let i_name = match *input {
+            Type::Simple(s) => s,
+            _ => panic!("input type should be simple"),
+        };
+
+        assert_eq!( i_name, "alpha" );
+
+        let o_name = match *output {
+            Type::Simple(s) => s,
+            _ => panic!("input type should be simple"),
+        };
+
+        assert_eq!( o_name, "beta" );
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_paren_type() -> Result<(), ParseError> {
+        let i = "(((alpha))) ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        let name = match u {
+            Type::Simple(s) => s, 
+            _ => panic!("should be simple type"),
+        };
+
+        assert_eq!( name, "alpha" );
+        Ok(())
+    }
 }
