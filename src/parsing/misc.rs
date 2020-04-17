@@ -56,8 +56,6 @@ impl<'a> Input<'a> {
 
                     self.expect(",")?;
                 }
-
-                self.expect(")")?;
             }
 
             match types.len() {
@@ -123,8 +121,6 @@ impl<'a> Input<'a> {
 
                     self.expect(",")?;
                 }
-
-                self.expect(">")?;
 
                 Ok(Type::Indexed( simple, types ))
             }
@@ -241,9 +237,94 @@ mod test {
         let u = input.parse_type()?;
         let name = match u {
             Type::Simple(s) => s,
-            _ => panic!(""),
+            _ => panic!("should be simple type"), 
         };
         assert_eq!( name, "simple" );
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_indexed_type() -> Result<(), ParseError> {
+        let i = "simple<alpha, beta> ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+        let (name, types) = match u {
+            Type::Indexed(s, ts) => (s, ts),
+            _ => panic!("should be indexed type"),
+        };
+        assert_eq!( name, "simple" );
+        assert_eq!( types.len(), 2 );
+
+        let i0_name = match &types[0] {
+            Type::Simple(s) => s,
+            _ => panic!("index 0 should be simple type"),
+        };
+        
+        let i1_name = match &types[1] {
+            Type::Simple(s) => s,
+            _ => panic!("index 1 should be simple type"),
+        };
+
+        assert_eq!( i0_name, "alpha" );
+        assert_eq!( i1_name, "beta" );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_namespace_type() -> Result<(), ParseError> {
+        let i = "mod1::mod2::Trait::Type ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+        let (names, t) = match u {
+            Type::Namespace(ns, t) => (ns, t),
+            _ => panic!("should be namespace type"),
+        };
+
+        assert_eq!( names.len(), 3 );
+        assert_eq!( names[0], "mod1" );
+
+        let st_name = match *t {
+            Type::Simple(s) => s,
+            _ => panic!("type should be simple type"),
+        };
+
+        assert_eq!( st_name, "Type" );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_unit_type() -> Result<(), ParseError> {
+        let i = "() ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        match u {
+            Type::Unit => Ok(()),
+            _ => panic!("should be unit type"),
+        }
+    }
+
+    #[test]
+    fn should_parse_tuple_type() -> Result<(), ParseError> {
+        let i = "(alpha, beta, gamma) ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        let types = match u {
+            Type::Tuple(ts) => ts, 
+            _ => panic!("should be tuple type"),
+        };
+
+        assert_eq!( types.len(), 3 );
+
+        let t1_name = match &types[0] {
+            Type::Simple(s) => s,
+            _ => panic!("t1 should be simple type"),
+        };
+
+        assert_eq!( t1_name, "alpha" );
         Ok(())
     }
 }
