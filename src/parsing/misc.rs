@@ -41,16 +41,109 @@ impl<'a> Input<'a> {
         Ok( Use { imports, namespace } )
     }
 
-// a, (), (a), (a,b), (a,b,c), a -> b, a -> b -> c, a<b>, a<b,c,d>, (a -> b) -> c
-    /*pub fn parse_type(&mut self) -> Result<Type, ParseError> {
-        if matches!( self.expect("(") ) {
+// a, (), (a), (a,b), (a,b,c), a -> b, a -> b -> c, a<b>, a<b,c,d>, (a -> b) -> c, a::b // module::concrete type or trait::abstract type
+    pub fn parse_type(&mut self) -> Result<Type, ParseError> {
+        if matches!( self.expect("("), Ok(()) ) {
+            let mut types = vec![];
 
-        }
-        else if matches!( self.parse_symbol() ) {
+            if matches!( self.expect(")"), Err(_) ) {
+                loop {
+                    types.push( self.parse_type()? );
 
+                    if matches!( self.expect(")"), Ok(()) ) {
+                        break;
+                    }
+
+                    self.expect(",")?;
+                }
+
+                self.expect(")")?;
+            }
+
+            match types.len() {
+                0 => Ok(Type::Unit),
+                1 => Ok(types.remove(0)),
+                _ => Ok(Type::Tuple(types)),
+            }
         }
-        
-    }*/
+        else {
+            let simple = self.parse_symbol()?;
+
+            if matches!( self.expect("->"), Ok(()) ) {
+                let out = self.parse_type()?;
+                Ok(Type::Arrow{ input: Box::new(Type::Simple(simple)), output: Box::new(out) })
+            }
+            else if matches!( self.expect("::"), Ok(()) ) {
+                let mut types = vec![];
+
+                loop {
+                    let t = self.parse_type()?;
+                    match t {
+                        Type::Simple(s) => types.push(Type::Simple(s)),
+                        Type::Indexed(s, ts) => 
+                            types.push(Type::Indexed(s, ts)),
+                        Type::Namespace(_, _) => 
+                            return Err(ParseError::ErrorAt(0, format!(""))),
+                        Type::Unit => 
+                            return Err(ParseError::ErrorAt(0, format!(""))),
+                        Type::Tuple(_) => 
+                            return Err(ParseError::ErrorAt(0, format!(""))),
+                        Type::Arrow{ .. } => 
+                            return Err(ParseError::ErrorAt(0, format!(""))),
+                    }
+
+                    if matches!( self.expect(">"), Ok(()) ) {
+                        break;
+                    }
+
+                    self.expect(",")?;
+                }
+
+                let t = types.pop().unwrap();
+
+                let names = types.into_iter().map(|x| match x {
+                    Type::Simple(s) => s,
+                    _ => panic!(""),
+                }).collect::<Vec<String>>();
+                   
+
+                Ok(Type::Namespace( names, Box::new(t) ))
+            }
+            else if matches!( self.expect("<"), Ok(()) ) {
+                let mut types = vec![];
+
+                loop {
+                    types.push( self.parse_type()? );
+
+                    if matches!( self.expect(">"), Ok(()) ) {
+                        break;
+                    }
+
+                    self.expect(",")?;
+                }
+
+                self.expect(">")?;
+
+                Ok(Type::Indexed( simple, types ))
+            }
+            else {
+                Ok(Type::Simple(simple))
+            }
+        }
+
+         
+        /*else if matches!( self.parse_symbol() ) {
+            // solo symbol
+            // follow by arrow
+            // follow by <
+            // follow by ::
+            // follow by ,
+            // follow by )
+            // follow by >
+
+        }*/
+
+    }
 }
 
 #[cfg(test)]

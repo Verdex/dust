@@ -27,10 +27,12 @@ pub struct TypeConstructor {
 
 #[derive(Debug)]
 pub enum Type {
+    Unit,
     Simple(String),
     Indexed(String, Vec<Type>),
     Arrow { input : Box<Type>, output : Box<Type> },
     Tuple(Vec<Type>),
+    Namespace(Vec<String>, Box<Type>),
 }
 
 #[derive(Debug)]
