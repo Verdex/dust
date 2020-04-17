@@ -8,7 +8,13 @@ pub struct Input<'a> {
     data : &'a [(usize, char)] 
 }
 
+#[derive(Clone, Copy)]
+pub struct RestorePoint<'a> {
+    data : &'a [(usize, char)] 
+}
+
 impl<'a> Input<'a> {
+
     pub fn new(input : &'a [(usize, char)] ) -> Input<'a> { 
         Input { data: input }
     }
@@ -35,6 +41,14 @@ impl<'a> Input<'a> {
         }
         self.data = d;
         Ok(())
+    }
+
+    pub fn create_restore(&self) -> RestorePoint<'a> {
+        RestorePoint{ data: self.data }
+    }
+
+    pub fn restore(&mut self, restore_point : RestorePoint<'a>) {
+        self.data = restore_point.data 
     }
 
     pub fn expect(&mut self,  s : &str) -> Result<(), ParseError>  {
@@ -323,5 +337,57 @@ whitespace " "#.char_indices().collect::<Vec<(usize, char)>>() };
         assert_eq!( number, "\\ \0 \n \r \t \"" );
         assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
         Ok(())
+    }
+
+    #[test]
+    fn should_restore() -> Result<(), ParseError> {
+        let mut input = Input { data: &"-1234 ".char_indices().collect::<Vec<(usize, char)>>() };
+        let r = input.create_restore();
+        let number = input.parse_number()?;
+        assert_eq!( number, "-1234" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+
+        let number = input.parse_number();
+        assert_eq!( matches!(number, Err(_)), true );
+
+        input.restore(r);
+        let number = input.parse_number()?;
+        assert_eq!( number, "-1234" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+        Ok(()) 
+    }
+
+    #[test]
+    fn should_handle_multiple_restores() -> Result<(), ParseError> {
+        let mut input = Input { data: &"-1234 789 ".char_indices().collect::<Vec<(usize, char)>>() };
+        let r1 = input.create_restore();
+
+        let number = input.parse_number()?;
+        assert_eq!( number, "-1234" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " 789 ".to_string() ); 
+
+        let r2 = input.create_restore();
+
+        let number = input.parse_number()?;
+        assert_eq!( number, "789" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+
+        input.restore(r2);
+
+        let number = input.parse_number()?;
+        assert_eq!( number, "789" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+
+        input.restore(r1);
+
+        let number = input.parse_number()?;
+        assert_eq!( number, "-1234" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " 789 ".to_string() ); 
+
+        let number = input.parse_number()?;
+        assert_eq!( number, "789" );
+        assert_eq!( input.data.into_iter().map(|(_,x)| x).collect::<String>(), " ".to_string() ); 
+
+        Ok(()) 
     }
 }
