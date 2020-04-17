@@ -82,6 +82,8 @@ impl<'a> Input<'a> {
                         Type::Simple(s) => types.push(Type::Simple(s)),
                         Type::Indexed(s, ts) => 
                             types.push(Type::Indexed(s, ts)),
+                            // TODO Error messages
+                            // TODO index
                         Type::Namespace(_, _) => 
                             return Err(ParseError::ErrorAt(0, format!(""))),
                         Type::Unit => 
@@ -92,22 +94,22 @@ impl<'a> Input<'a> {
                             return Err(ParseError::ErrorAt(0, format!(""))),
                     }
 
-                    if matches!( self.expect(">"), Ok(()) ) {
+                    if !matches!( self.expect("::"), Ok(()) ) {
                         break;
                     }
-
-                    self.expect(",")?;
                 }
 
-                let t = types.pop().unwrap();
+                let t = types.pop().expect("parse_type has impossible empty types list");
 
-                let names = types.into_iter().map(|x| match x {
+                let mut names = types.into_iter().map(|x| match x {
                     Type::Simple(s) => s,
-                    _ => panic!(""),
+                    _ => panic!("parse_type encountered impossible non-simple type"),
                 }).collect::<Vec<String>>();
                    
+                let mut all = vec![simple];
+                all.append(&mut names);
 
-                Ok(Type::Namespace( names, Box::new(t) ))
+                Ok(Type::Namespace( all, Box::new(t) ))
             }
             else if matches!( self.expect("<"), Ok(()) ) {
                 let mut types = vec![];
@@ -130,19 +132,6 @@ impl<'a> Input<'a> {
                 Ok(Type::Simple(simple))
             }
         }
-
-         
-        /*else if matches!( self.parse_symbol() ) {
-            // solo symbol
-            // follow by arrow
-            // follow by <
-            // follow by ::
-            // follow by ,
-            // follow by )
-            // follow by >
-
-        }*/
-
     }
 }
 
@@ -242,6 +231,19 @@ mod test {
         assert_eq!( u.namespace[0], "symb" );
         assert_eq!( u.namespace[1], "other" );
         assert_eq!( u.namespace[2], "some" );
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_simple_type() -> Result<(), ParseError> {
+        let i = "simple ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+        let name = match u {
+            Type::Simple(s) => s,
+            _ => panic!(""),
+        };
+        assert_eq!( name, "simple" );
         Ok(())
     }
 }
