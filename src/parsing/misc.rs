@@ -281,6 +281,8 @@ mod test {
 
         assert_eq!( names.len(), 3 );
         assert_eq!( names[0], "mod1" );
+        assert_eq!( names[1], "mod2" );
+        assert_eq!( names[2], "Trait" );
 
         let st_name = match *t {
             Type::Simple(s) => s,
