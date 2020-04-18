@@ -41,16 +41,59 @@ impl<'a> Input<'a> {
         Ok( Use { imports, namespace } )
     }
 
+    pub parse_type(&mut self) -> Result<Type, ParseError> {
+
+    }
+
+    fn parse_tuple_type(&mut self) -> Result<Type, ParseError> {
+        self.expect("(")?;
+        let mut types = vec![];
+
+        println!("paren begin");
+
+        if matches!( self.expect(")"), Err(_) ) {
+            loop {
+                let t = self.parse_type()?;
+                println!("paren type: {:?}", t);
+                types.push(t);
+
+
+                if matches!( self.expect(")"), Ok(()) ) {
+                    println!("paren end");
+                    break;
+                }
+
+                self.expect(",")?;
+            }
+        }
+
+        match types.len() {
+            0 => Ok(Type::Unit),
+            1 => Ok(types.remove(0)),
+            _ => Ok(Type::Tuple(types)),
+        }
+    }
+
 // a, (), (a), (a,b), (a,b,c), a -> b, a -> b -> c, a<b>, a<b,c,d>, (a -> b) -> c, a::b // module::concrete type or trait::abstract type
-    pub fn parse_type(&mut self) -> Result<Type, ParseError> {
-        if matches!( self.expect("("), Ok(()) ) {
+    fn parse_tail_type(&mut self) -> Result<Type, ParseError> {
+        let tuple = self.parse_tuple_type();
+        match tuple {
+            Ok(t) => 
+        }
+        /*if matches!( self.expect("("), Ok(()) ) {
             let mut types = vec![];
+
+            println!("paren begin");
 
             if matches!( self.expect(")"), Err(_) ) {
                 loop {
-                    types.push( self.parse_type()? );
+                    let t = self.parse_type()?;
+                    println!("paren type: {:?}", t);
+                    types.push(t);
+
 
                     if matches!( self.expect(")"), Ok(()) ) {
+                        println!("paren end");
                         break;
                     }
 
@@ -64,11 +107,14 @@ impl<'a> Input<'a> {
                 _ => Ok(Type::Tuple(types)),
             }
         }
-        else {
+        else {*/
             let simple = self.parse_symbol()?;
+            println!("else simple symbol: {:?}", simple);
 
             if matches!( self.expect("->"), Ok(()) ) {
+                println!("check arrow output");
                 let out = self.parse_type()?;
+                println!("arrow output: {:?}", out);
                 Ok(Type::Arrow{ input: Box::new(Type::Simple(simple)), output: Box::new(out) })
             }
             else if matches!( self.expect("::"), Ok(()) ) {
@@ -125,7 +171,7 @@ impl<'a> Input<'a> {
             else {
                 Ok(Type::Simple(simple))
             }
-        }
+        //}
     }
 }
 
@@ -367,6 +413,105 @@ mod test {
         };
 
         assert_eq!( name, "alpha" );
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_arrow_past_arrow_parameter() -> Result<(), ParseError> {
+        let i = "a -> (b -> c) -> d".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+
+        let (input_a, output_bc_etc) = match u {
+            Type::Arrow {input, output} => (*input, *output),
+            x => panic!("should be arrow type, but found: {:?}", x),
+        };
+
+        let name = match input_a {
+            Type::Simple(n) => n,
+            x => panic!("first input should be simple type, but found: {:?}", x),
+        };
+
+        assert_eq!( name, "a" );
+
+        let (input_bc, output_d) = match output_bc_etc {
+            Type::Arrow {input, output} => (*input, *output),
+            x => panic!("first output should be arrow type, but found: {:?}", x),
+        };
+
+        let (input_b, output_c) = match input_bc {
+            Type::Arrow {input, output} => (*input, *output),
+            x => panic!("second input should be arrow type, but found {:?}", x),
+        };
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_paren_arrows() -> Result<(), ParseError> {
+        let i = "a -> b -> (c -> d) -> ((e -> f) -> g) -> i ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        println!("u = {:?}", u);
+
+        let (input_a, output_b_etc) = match u {
+            Type::Arrow{ input, output } => (*input, *output), 
+            _ => panic!("should be arrow type"),
+        };
+
+        let name = match input_a {
+            Type::Simple(n) => n,
+            x => panic!("first input should be simple type, but found: {:?}", x),
+        };
+
+        assert_eq!(name, "a");
+
+        let (input_b, output_cd_etc) = match output_b_etc {
+            Type::Arrow { input, output } => (*input, *output),
+            x => panic!("first output should be arrow type, but found: {:?}", x),
+        };
+
+        let name = match input_b {
+            Type::Simple(n) => n,
+            x => panic!("second input should be simple type, but found: {:?}", x),
+        };
+        
+        assert_eq!(name, "b");
+
+        let (input_cd, output_efg_etc) = match output_cd_etc {
+            Type::Arrow { input, output } => (*input, *output),
+            x => panic!("second output should be arrow type, but found: {:?}", x),
+        };
+
+        let (input_c, output_d) = match input_cd {
+            Type::Arrow { input, output } => (*input, *output),
+            x => panic!("third input should be arrow type, but found: {:?}", x),
+        };
+
+        let name = match input_c {
+            Type::Simple(n) => n,
+            x => panic!("third input's input should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "c" );
+        
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_complex_tuple() -> Result<(), ParseError> {
+        let i = "(a -> b, c::d::e, (f -> g) -> h, (), i<j,k,l>, (m, n)) ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        let types = match u {
+            Type::Tuple(types) => types, 
+            _ => panic!("should be tuple type"),
+        };
+
+        assert_eq!( types.len(), 6 );
         Ok(())
     }
 }
