@@ -72,42 +72,40 @@ impl<'a> Input<'a> {
                 Ok(Type::Arrow{ input: Box::new(Type::Simple(simple)), output: Box::new(out) })
             }
             else if matches!( self.expect("::"), Ok(()) ) {
-                let mut types = vec![];
+                let mut names = vec![];
 
                 loop {
-                    let t = self.parse_type()?;
-                    match t {
-                        Type::Simple(s) => types.push(Type::Simple(s)),
-                        Type::Indexed(s, ts) => 
-                            types.push(Type::Indexed(s, ts)),
-                            // TODO Error messages
-                            // TODO index
-                        Type::Namespace(_, _) => 
-                            return Err(ParseError::ErrorAt(0, format!(""))),
-                        Type::Unit => 
-                            return Err(ParseError::ErrorAt(0, format!(""))),
-                        Type::Tuple(_) => 
-                            return Err(ParseError::ErrorAt(0, format!(""))),
-                        Type::Arrow{ .. } => 
-                            return Err(ParseError::ErrorAt(0, format!(""))),
-                    }
+                    let restore_point = self.create_restore();
+                    let name = self.parse_symbol()?;
 
                     if !matches!( self.expect("::"), Ok(()) ) {
+                        self.restore(restore_point);
                         break;
                     }
+
+                    names.push(name);
                 }
 
-                let t = types.pop().expect("parse_type has impossible empty types list");
+                let t = self.parse_type()?;
 
-                let mut names = types.into_iter().map(|x| match x {
-                    Type::Simple(s) => s,
-                    _ => panic!("parse_type encountered impossible non-simple type"),
-                }).collect::<Vec<String>>();
-                   
-                let mut all = vec![simple];
-                all.append(&mut names);
+                match t {
+                    Type::Simple(_) => (),
+                    Type::Indexed(_, _) => (),
+                        // TODO Error messages
+                        // TODO index
+                    Type::Namespace(_, _) => 
+                        return Err(ParseError::ErrorAt(0, format!(""))),
+                    Type::Unit => 
+                        return Err(ParseError::ErrorAt(0, format!(""))),
+                    Type::Tuple(_) => 
+                        return Err(ParseError::ErrorAt(0, format!(""))),
+                    Type::Arrow{ .. } => 
+                        return Err(ParseError::ErrorAt(0, format!(""))),
+                }
 
-                Ok(Type::Namespace( all, Box::new(t) ))
+                names.insert( 0, simple );
+                
+                Ok(Type::Namespace( names, Box::new(t) ))
             }
             else if matches!( self.expect("<"), Ok(()) ) {
                 let mut types = vec![];
