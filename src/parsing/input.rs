@@ -34,7 +34,7 @@ impl<'a> Input<'a> {
                     comment -= 1;
                     d = rest; 
                 }, 
-                [(_, x), rest @ ..] if comment > 0 => d = rest,
+                [_, rest @ ..] if comment > 0 => d = rest,
                 [(_, x), rest @ ..] if x.is_whitespace() => d = rest,
                 _ => break,
             }
@@ -88,7 +88,7 @@ impl<'a> Input<'a> {
                     d = rest;
                     cs.push(x);
                 },
-                [(_, x), ..] => break,
+                [_, ..] => break,
             }
         }
 
@@ -125,7 +125,7 @@ impl<'a> Input<'a> {
                     d = rest;
                     cs.push(x);
                 },
-                [(i, x), ..] => break, 
+                [_, ..] => break, 
             }
         }
 
@@ -180,12 +180,12 @@ impl<'a> Input<'a> {
                     d = rest;
                     cs.push('"');
                 },
-                [(i, x), rest @ ..] if escape => return Err(ParseError::ErrorAt(*i, format!("Encountered unknown escape character {}", x))),
+                [(i, x), ..] if escape => return Err(ParseError::ErrorAt(*i, format!("Encountered unknown escape character {}", x))),
                 [(_, '\\'), rest @ ..] => {
                     escape = true;
                     d = rest;
                 },
-                [(_, '"'), rest @ ..] => break,
+                [(_, '"'), ..] => break,
                 [(_, x), rest @ ..] => {
                     d = rest;
                     cs.push(*x);
