@@ -454,45 +454,95 @@ mod test {
 
         let (input_a, output_b_etc) = match u {
             Type::Arrow{ input, output } => (*input, *output), 
-            _ => panic!("should be arrow type"),
+            x => panic!("should be arrow type, but found {:?}", x),
         };
 
         let name = match input_a {
             Type::Simple(n) => n,
-            x => panic!("first input should be simple type, but found: {:?}", x),
+            x => panic!("input_a should be simple type, but found: {:?}", x),
         };
 
         assert_eq!(name, "a");
 
         let (input_b, output_cd_etc) = match output_b_etc {
             Type::Arrow { input, output } => (*input, *output),
-            x => panic!("first output should be arrow type, but found: {:?}", x),
+            x => panic!("input_b_etc should be arrow type, but found: {:?}", x),
         };
 
         let name = match input_b {
             Type::Simple(n) => n,
-            x => panic!("second input should be simple type, but found: {:?}", x),
+            x => panic!("input_b should be simple type, but found: {:?}", x),
         };
         
         assert_eq!(name, "b");
 
         let (input_cd, output_efg_etc) = match output_cd_etc {
             Type::Arrow { input, output } => (*input, *output),
-            x => panic!("second output should be arrow type, but found: {:?}", x),
+            x => panic!("output_cd_etc should be arrow type, but found: {:?}", x),
         };
 
         let (input_c, output_d) = match input_cd {
             Type::Arrow { input, output } => (*input, *output),
-            x => panic!("third input should be arrow type, but found: {:?}", x),
+            x => panic!("input_cd should be arrow type, but found: {:?}", x),
         };
 
         let name = match input_c {
             Type::Simple(n) => n,
-            x => panic!("third input's input should be simple type, but found {:?}", x),
+            x => panic!("input_c should be simple type, but found {:?}", x),
         };
 
         assert_eq!( name, "c" );
+
+        let name = match output_d {
+            Type::Simple(n) => n,
+            x => panic!("output_d should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "d" );
         
+        let (input_efg, output_i) = match output_efg_etc {
+            Type::Arrow{input, output} => (*input, *output),
+            x => panic!("input_efg_etc should be arrow type, but found {:?}", x),
+        };
+
+        let (input_ef, output_g) = match input_efg {
+            Type::Arrow{input, output} => (*input, *output),
+            x => panic!("input_efg should be arrow type, but found {:?}", x),
+        };
+
+        let (input_e, output_f) = match input_ef {
+            Type::Arrow{input, output} => (*input, *output),
+            x => panic!("input_ef should be arrow type, but found {:?}", x),
+        };
+
+        let name = match input_e {
+            Type::Simple(n) => n,
+            x => panic!("input_e should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "e" );
+
+        let name = match output_f {
+            Type::Simple(n) => n,
+            x => panic!("output_f should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "f" );
+
+        let name = match output_g {
+            Type::Simple(n) => n,
+            x => panic!("output_g should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "g" );
+
+        let name = match output_i {
+            Type::Simple(n) => n,
+            x => panic!("output_i should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "i" );
+
         Ok(())
     }
 
