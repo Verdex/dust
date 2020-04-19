@@ -548,16 +548,124 @@ mod test {
 
     #[test]
     fn should_parse_complex_tuple() -> Result<(), ParseError> {
-        let i = "(a -> b, c::d::e, (f -> g) -> h, (), i<j,k,l>, (m, n)) ".char_indices().collect::<Vec<(usize, char)>>();
+        let i = "(a -> b, c::d::e, (), i<j,k,l>, (m, n)) ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_type()?;
 
-        let types = match u {
+        let mut types = match u {
             Type::Tuple(types) => types, 
             _ => panic!("should be tuple type"),
         };
 
-        assert_eq!( types.len(), 6 );
+        assert_eq!( types.len(), 5 );
+
+        let one = types.remove(0);
+
+        let (one_input, one_output) = match one {
+            Type::Arrow{input, output} => (*input, *output),   
+            x => panic!("one should be arrow type, but found {:?}", x),
+        };
+
+        let name = match one_input {
+            Type::Simple(n) => n,
+            x => panic!("one_input should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "a" );
+
+        let name = match one_output {
+            Type::Simple(n) => n,
+            x => panic!("one_output should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "b" );
+
+        let two = types.remove(0);
+        
+        let (names, t) = match two {
+            Type::Namespace(ns, t) => (ns, *t),
+            x => panic!("two should be namespace type, but found {:?}", x),
+        };
+        
+        assert_eq!( names.len(), 2 );
+        assert_eq!( names[0], "c" );
+        assert_eq!( names[1], "d" );
+
+        let name = match t {
+            Type::Simple(n) => n,
+            x => panic!("t should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "e" );
+
+        let three = types.remove(0);
+
+        assert_eq!( matches!( three, Type::Unit ), true );
+
+        let four = types.remove(0);
+
+        let (name, mut ts) = match four {
+            Type::Indexed(n, ts) => (n, ts),
+            x => panic!("four should be indexed type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "i" );
+
+        assert_eq!( ts.len(), 3 );
+
+        let index_one = ts.remove(0);
+
+        let name = match index_one {
+            Type::Simple(n) => n,
+            x => panic!( "index_one should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "j" );
+
+        let index_two = ts.remove(0);
+
+        let name = match index_two {
+            Type::Simple(n) => n,
+            x => panic!( "index_two should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "k" );
+
+        let index_three = ts.remove(0);
+
+        let name = match index_three {
+            Type::Simple(n) => n,
+            x => panic!( "index_three should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "l" );
+
+        let five = types.remove(0);
+
+        let mut ts = match five {
+            Type::Tuple(ts) => ts,
+            x => panic!( "five should be tuple type, but found {:?}", x),
+        };
+
+        assert_eq!( ts.len(), 2 );
+        
+        let tuple_one = ts.remove(0);
+
+        let name = match tuple_one {
+            Type::Simple(n) => n,
+            x => panic!( "tuple_one should be simple type but found {:?}", x),
+        };
+
+        assert_eq!( name, "m" );
+
+        let tuple_two = ts.remove(0);
+
+        let name = match tuple_two {
+            Type::Simple(n) => n,
+            x => panic!( "tuple_two should be simple type but found {:?}", x),
+        };
+
+        assert_eq!( name, "n" );
         Ok(())
     }
 }
