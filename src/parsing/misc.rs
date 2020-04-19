@@ -41,25 +41,92 @@ impl<'a> Input<'a> {
         Ok( Use { imports, namespace } )
     }
 
-    pub parse_type(&mut self) -> Result<Type, ParseError> {
+    pub fn parse_type(&mut self) -> Result<Type, ParseError> {
+        let tuple = self.parse_tuple_type();
+        match tuple {
+            Ok(t) => return self.check_arrow_type(t),
+            _ => (),
+        }
 
+        let simple = self.parse_symbol()?; 
+
+        if matches!( self.expect("::"), Ok(()) ) {
+            let t = self.parse_namespace_type(simple)?;
+            return self.check_arrow_type(t);
+        }
+
+        if matches!( self.expect("<"), Ok(()) ) {
+            let t = self.parse_index_type(simple)?;
+            return self.check_arrow_type(t);
+        }
+
+        self.check_arrow_type(Type::Simple(simple))
+    }
+
+    fn parse_namespace_type(&mut self, simple : String) -> Result<Type, ParseError> {
+        let mut names = vec![];
+
+        loop {
+            let restore_point = self.create_restore();
+            let name = self.parse_symbol()?;
+
+            if !matches!( self.expect("::"), Ok(()) ) {
+                self.restore(restore_point);
+                break;
+            }
+
+            names.push(name);
+        }
+
+        let t = self.parse_type()?;
+
+        match t {
+            Type::Simple(_) => (),
+            Type::Indexed(_, _) => (),
+                // TODO Error messages
+                // TODO index
+            Type::Namespace(_, _) => 
+                return Err(ParseError::ErrorAt(0, format!(""))),
+            Type::Unit => 
+                return Err(ParseError::ErrorAt(0, format!(""))),
+            Type::Tuple(_) => 
+                return Err(ParseError::ErrorAt(0, format!(""))),
+            Type::Arrow{ .. } => 
+                return Err(ParseError::ErrorAt(0, format!(""))),
+        }
+
+        names.insert( 0, simple );
+        
+        Ok(Type::Namespace( names, Box::new(t) ))
+    }
+
+    fn parse_index_type(&mut self, simple : String) -> Result<Type, ParseError> {
+        let mut types = vec![];
+
+        loop {
+            types.push( self.parse_type()? );
+
+            if matches!( self.expect(">"), Ok(()) ) {
+                break;
+            }
+
+            self.expect(",")?;
+        }
+
+        Ok(Type::Indexed( simple, types ))
     }
 
     fn parse_tuple_type(&mut self) -> Result<Type, ParseError> {
         self.expect("(")?;
         let mut types = vec![];
 
-        println!("paren begin");
-
         if matches!( self.expect(")"), Err(_) ) {
             loop {
                 let t = self.parse_type()?;
-                println!("paren type: {:?}", t);
+
                 types.push(t);
 
-
                 if matches!( self.expect(")"), Ok(()) ) {
-                    println!("paren end");
                     break;
                 }
 
@@ -74,104 +141,14 @@ impl<'a> Input<'a> {
         }
     }
 
-// a, (), (a), (a,b), (a,b,c), a -> b, a -> b -> c, a<b>, a<b,c,d>, (a -> b) -> c, a::b // module::concrete type or trait::abstract type
-    fn parse_tail_type(&mut self) -> Result<Type, ParseError> {
-        let tuple = self.parse_tuple_type();
-        match tuple {
-            Ok(t) => 
+    fn check_arrow_type(&mut self, t : Type) -> Result<Type, ParseError> {
+        if matches!( self.expect("->"), Ok(()) ) {
+            let out = self.parse_type()?;
+            Ok(Type::Arrow{ input: Box::new(t), output: Box::new(out) })
         }
-        /*if matches!( self.expect("("), Ok(()) ) {
-            let mut types = vec![];
-
-            println!("paren begin");
-
-            if matches!( self.expect(")"), Err(_) ) {
-                loop {
-                    let t = self.parse_type()?;
-                    println!("paren type: {:?}", t);
-                    types.push(t);
-
-
-                    if matches!( self.expect(")"), Ok(()) ) {
-                        println!("paren end");
-                        break;
-                    }
-
-                    self.expect(",")?;
-                }
-            }
-
-            match types.len() {
-                0 => Ok(Type::Unit),
-                1 => Ok(types.remove(0)),
-                _ => Ok(Type::Tuple(types)),
-            }
+        else {
+            Ok(t)
         }
-        else {*/
-            let simple = self.parse_symbol()?;
-            println!("else simple symbol: {:?}", simple);
-
-            if matches!( self.expect("->"), Ok(()) ) {
-                println!("check arrow output");
-                let out = self.parse_type()?;
-                println!("arrow output: {:?}", out);
-                Ok(Type::Arrow{ input: Box::new(Type::Simple(simple)), output: Box::new(out) })
-            }
-            else if matches!( self.expect("::"), Ok(()) ) {
-                let mut names = vec![];
-
-                loop {
-                    let restore_point = self.create_restore();
-                    let name = self.parse_symbol()?;
-
-                    if !matches!( self.expect("::"), Ok(()) ) {
-                        self.restore(restore_point);
-                        break;
-                    }
-
-                    names.push(name);
-                }
-
-                let t = self.parse_type()?;
-
-                match t {
-                    Type::Simple(_) => (),
-                    Type::Indexed(_, _) => (),
-                        // TODO Error messages
-                        // TODO index
-                    Type::Namespace(_, _) => 
-                        return Err(ParseError::ErrorAt(0, format!(""))),
-                    Type::Unit => 
-                        return Err(ParseError::ErrorAt(0, format!(""))),
-                    Type::Tuple(_) => 
-                        return Err(ParseError::ErrorAt(0, format!(""))),
-                    Type::Arrow{ .. } => 
-                        return Err(ParseError::ErrorAt(0, format!(""))),
-                }
-
-                names.insert( 0, simple );
-                
-                Ok(Type::Namespace( names, Box::new(t) ))
-            }
-            else if matches!( self.expect("<"), Ok(()) ) {
-                let mut types = vec![];
-
-                loop {
-                    types.push( self.parse_type()? );
-
-                    if matches!( self.expect(">"), Ok(()) ) {
-                        break;
-                    }
-
-                    self.expect(",")?;
-                }
-
-                Ok(Type::Indexed( simple, types ))
-            }
-            else {
-                Ok(Type::Simple(simple))
-            }
-        //}
     }
 }
 
@@ -418,7 +395,7 @@ mod test {
 
     #[test]
     fn should_parse_arrow_past_arrow_parameter() -> Result<(), ParseError> {
-        let i = "a -> (b -> c) -> d".char_indices().collect::<Vec<(usize, char)>>();
+        let i = "a -> (b -> c) -> d ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_type()?;
 
@@ -445,6 +422,27 @@ mod test {
             x => panic!("second input should be arrow type, but found {:?}", x),
         };
 
+        let name = match input_b {
+            Type::Simple(n) => n,
+            x => panic!("second input input should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "b" );
+
+        let name = match output_c {
+            Type::Simple(n) => n,
+            x => panic!("second input output should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "c" );
+
+        let name = match output_d {
+            Type::Simple(n) => n,
+            x => panic!("final output should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "d" );
+
         Ok(())
     }
 
@@ -453,8 +451,6 @@ mod test {
         let i = "a -> b -> (c -> d) -> ((e -> f) -> g) -> i ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_type()?;
-
-        println!("u = {:?}", u);
 
         let (input_a, output_b_etc) = match u {
             Type::Arrow{ input, output } => (*input, *output), 
