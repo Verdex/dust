@@ -668,4 +668,85 @@ mod test {
         assert_eq!( name, "n" );
         Ok(())
     }
+
+    #[test]
+    fn should_parse_index_namespace() -> Result<(), ParseError> {
+        let i = "a::e<f> ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+        
+        let (names, t) = match u {
+            Type::Namespace(names, t) => (names, *t),
+            x => panic!("should be namespace type, but found {:?}", x),
+        };
+
+        assert_eq!( names.len(), 1 );
+        assert_eq!( names[0], "a" );
+
+        let (name, mut ts) = match t {
+            Type::Indexed(n, ts) => (n, ts),
+            x => panic!("t should be indexed type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "e" );
+
+        assert_eq!( ts.len(), 1 );
+        
+        let index_one = ts.remove(0);
+
+        let name = match index_one {
+            Type::Simple(n) => n,
+            x => panic!("index_one should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "f" );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_indexed_arrow_param() -> Result<(), ParseError> {
+        let i = "a<b> -> c<d>".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        let (input, output) = match u {
+            Type::Arrow {input, output} => (*input, *output),
+            x => panic!("should be arrow type, but found {:?}", x),
+        };
+
+        let (name, mut ts) = match input {
+            Type::Indexed(name, ts) => (name, ts),
+            x => panic!("input should be index type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "a" );
+
+        let index_one = ts.remove(0);
+
+        let name = match index_one {
+            Type::Simple(n) => n,
+            x => panic!("index_one should be index type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "b" );
+
+        let (name, mut ts) = match output {
+            Type::Indexed(name, ts) => (name, ts),
+            x => panic!("output should be index type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "c" );
+
+        let index_one = ts.remove(0);
+
+        let name = match index_one {
+            Type::Simple(n) => n,
+            x => panic!("index_one should be index type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "d" );
+
+        Ok(())
+    }
 }
