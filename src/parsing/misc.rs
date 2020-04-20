@@ -78,26 +78,17 @@ impl<'a> Input<'a> {
             names.push(name);
         }
 
-        let t = self.parse_type()?;
-
-        match t {
-            Type::Simple(_) => (),
-            Type::Indexed(_, _) => (),
-                // TODO Error messages
-                // TODO index
-            Type::Namespace(_, _) => 
-                return Err(ParseError::ErrorAt(0, format!(""))),
-            Type::Unit => 
-                return Err(ParseError::ErrorAt(0, format!(""))),
-            Type::Tuple(_) => 
-                return Err(ParseError::ErrorAt(0, format!(""))),
-            Type::Arrow{ .. } => 
-                return Err(ParseError::ErrorAt(0, format!(""))),
-        }
+        let ns_type = self.parse_symbol()?; 
 
         names.insert( 0, simple );
-        
-        Ok(Type::Namespace( names, Box::new(t) ))
+
+        if matches!( self.expect("<"), Ok(()) ) {
+            let t = self.parse_index_type(ns_type)?;
+            self.check_arrow_type(Type::Namespace( names, Box::new(t) ))
+        }
+        else {
+            self.check_arrow_type(Type::Namespace( names, Box::new(Type::Simple(ns_type)) ))
+        }
     }
 
     fn parse_index_type(&mut self, simple : String) -> Result<Type, ParseError> {
@@ -743,6 +734,50 @@ mod test {
         let name = match index_one {
             Type::Simple(n) => n,
             x => panic!("index_one should be index type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "d" );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_namespace_arrow_param() -> Result<(), ParseError> {
+        let i = "a::b -> c::d ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type()?;
+
+        let (input_ab, output_cd) = match u {
+            Type::Arrow {input, output} => (*input, *output),
+            x => panic!("should be arrow type, but found {:?}", x),
+        };
+
+        let (names, t) = match input_ab {
+            Type::Namespace(ns, t) => (ns, *t),
+            x => panic!("input_ab should be indexed type, but found {:?}", x),
+        };
+
+        assert_eq!( names.len(), 1 );
+        assert_eq!( names[0], "a" );
+
+        let name = match t {
+            Type::Simple(n) => n,
+            x => panic!("t should be simple type, but found {:?}", x),
+        };
+
+        assert_eq!( name, "b" );
+
+        let (names, t) = match output_cd {
+            Type::Namespace(ns, t) => (ns, *t),
+            x => panic!("output_cd should be indexed type, but found {:?}", x),
+        };
+
+        assert_eq!( names.len(), 1 );
+        assert_eq!( names[0], "c" );
+
+        let name = match t {
+            Type::Simple(n) => n,
+            x => panic!("t should be simple type, but found {:?}", x),
         };
 
         assert_eq!( name, "d" );
