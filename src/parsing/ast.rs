@@ -33,11 +33,26 @@ pub enum Type {
     Arrow { input : Box<Type>, output : Box<Type> },
     Tuple(Vec<Type>),
     Namespace(Vec<String>, Box<Type>),
+    Infer,
+}
+
+#[derive(Debug)]
+pub struct FunSig {
+    pub name : String,
+    pub type_params : Vec<(String, Option<Type>)>,
+    pub params : Vec<Param>,
+    pub return_Type : Type,
 }
 
 #[derive(Debug)]
 pub struct FunDef {
+}
 
+#[derive(Debug)]
+pub struct Param {
+    pub name : String,
+    pub param_type : Type,
+    pub mutable : bool,
 }
 
 #[derive(Debug)]
