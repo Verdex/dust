@@ -1,6 +1,6 @@
 
 #[derive(Debug)]
-pub struct meta {
+pub struct Meta {
     start : usize,
     end : usize,
 }

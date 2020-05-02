@@ -77,3 +77,29 @@ impl<'a> Input<'a> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_parse_type_param_list() -> Result<(), ParseError> {
+        let i = "<A : B, C : D + E + F, G, H>".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_type_param_list()?;
+        assert_eq!( u.len(), 4 );
+
+        assert_eq!( u[0].name, "A" );
+        assert_eq!( u[0].constraints.len(), 1 );
+        assert_eq!( u[0].constraints[0], "B" );
+
+        assert_eq!( u[1].name, "C" );
+        assert_eq!( u[1].constraints.len(), 3 );
+        assert_eq!( u[1].constraints[0], "D" );
+        assert_eq!( u[1].constraints[1], "E" );
+        assert_eq!( u[1].constraints[2], "F" );
+        Ok(())
+    }
+
+}
