@@ -34,6 +34,45 @@ impl<'a> Input<'a> {
     }
         // TODO type sig (need way to indicate if it is an owned type (maybe do that in the function def?)) 
 
+    fn parse_type_param_list(&mut self) -> Result<Vec<TypeParam>, ParseError> {
+        fn constraint_list(input : &mut Input) -> Result<Vec<String>, ParseError> {
+            let mut cs = vec![];
+            loop {
+                let c = input.parse_symbol()?;
+                cs.push(c);
+                match input.expect("+") {
+                    Err(_) => break,
+                    _ => (),
+                }
+            }
+            Ok(cs)
+        }
+
+        self.expect("<")?;
+
+        let mut params = vec![];
+
+        loop {
+            let name = self.parse_symbol()?;
+            match self.expect(":") {
+                Ok(_) => {
+                    let constraints = constraint_list(self)?;
+                    params.push( TypeParam { name, constraints } );
+                },
+                _ => params.push( TypeParam { name, constraints : vec![] } ),
+            }
+
+            match self.expect(",") {
+                Err(_) => break,
+                _ => (),
+            }
+        }
+
+        self.expect(">")?;
+
+        Ok(params)
+    }
+
     fn parse_fun_sig(&mut self) -> Result<FunSig, ParseError> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }

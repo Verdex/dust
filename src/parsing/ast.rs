@@ -39,9 +39,9 @@ pub enum Type {
 #[derive(Debug)]
 pub struct FunSig {
     pub name : String,
-    pub type_params : Vec<(String, Option<Type>)>,
+    pub type_params : Vec<TypeParam>,
     pub params : Vec<Param>,
-    pub return_Type : Type,
+    pub return_type : Type,
 }
 
 #[derive(Debug)]
@@ -53,6 +53,12 @@ pub struct Param {
     pub name : String,
     pub param_type : Type,
     pub mutable : bool,
+}
+
+#[derive(Debug)]
+pub struct TypeParam {
+    pub name : String,
+    pub constraints : Vec<String>,
 }
 
 #[derive(Debug)]
