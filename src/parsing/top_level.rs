@@ -83,13 +83,13 @@ impl<'a> Input<'a> {
             
             match self.expect("mut") {
                 Ok(_) =>  {
-                    let name = self.parse_symbol?;
+                    let name = self.parse_symbol()?;
                     self.expect(":")?;
                     let param_type = self.parse_type()?;
                     params.push( Param { name, param_type, mutable: true } );
                 },
                 Err(_) => {
-                    match self.parse_symbol {
+                    match self.parse_symbol() {
                         Ok(name) => {
                             self.expect(":")?;
                             let param_type = self.parse_type()?;
@@ -140,4 +140,55 @@ mod test {
         Ok(())
     }
 
+    #[test]
+    fn should_parse_param_list() -> Result<(), ParseError> { // TODO empty
+        let i = "( mut a : A -> B, b : B<C>, mut c : (C, D) ) ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_param_list()?;
+        assert_eq!( u.len(), 3 );
+
+        let a = u.remove(0);
+
+        assert_eq!( a.name, "a" );
+        let (input, output) = match a.param_type {
+            Type::Arrow { input, output } => (*input, *output),
+            x => panic!( "Expected Arrow, but found {:?}", x ),
+        };
+
+        match input {
+            Type::Simple(n) => assert_eq!( n, "A" ),
+            x => panic!( "Expected Simple but found {:?}", x ),
+        }
+
+        match output {
+            Type::Simple(n) => assert_eq!( n, "B" ),
+            x => panic!( "Expected Simple but found {:?}", x ),
+        }
+
+        assert_eq!( a.mutable, true );
+
+        let b = u.remove(0);
+
+        assert_eq!( b.name, "b" );
+        
+        let (b_type_name, mut b_type_params) = match b.param_type {
+            Type::Indexed( name, params ) => (name, params),
+            x => panic!( "Expected Indexed but found {:?}", x ),
+        };
+
+        assert_eq!( b_type_name, "B" );
+        
+        assert_eq!( b_type_params.len(), 1 );
+
+        let b_type_param_0 = b_type_params.remove(0);
+
+        match b_type_param_0 {
+            Type::Simple(name) => assert_eq!( name, "C" ),
+            x => panic!( "Expected Simple but found {:?}", x ),
+        }
+
+        assert_eq!( b.mutable, false );
+
+        Ok(())
+    }
 }
