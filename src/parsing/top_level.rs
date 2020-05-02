@@ -74,26 +74,30 @@ impl<'a> Input<'a> {
     }
 
     fn parse_param_list(&mut self) -> Result<Vec<Param>, ParseError> {
-        // (mut blah : Type, blah : Type) // emtpy is allowed
 
         self.expect("(")?;
 
         let mut params = vec![];
 
         loop {
-            // maybe mut
-            // if mut then definitely symbol
-            // if not mut then maybe symbol
-            // if symbol then definitely :
-            // maybe , if not then break
-
-            let name = self.parse_symbol()?;
-            match self.expect(":") {
-                Ok(_) => {
-                    let constraints = constraint_list(self)?;
-                    params.push( TypeParam { name, constraints } );
+            
+            match self.expect("mut") {
+                Ok(_) =>  {
+                    let name = self.parse_symbol?;
+                    self.expect(":")?;
+                    let param_type = self.parse_type()?;
+                    params.push( Param { name, param_type, mutable: true } );
                 },
-                _ => params.push( TypeParam { name, constraints : vec![] } ),
+                Err(_) => {
+                    match self.parse_symbol {
+                        Ok(name) => {
+                            self.expect(":")?;
+                            let param_type = self.parse_type()?;
+                            params.push( Param { name, param_type, mutable: false } );
+                        },
+                        Err(_) => break, 
+                    }
+                },
             }
 
             match self.expect(",") {
