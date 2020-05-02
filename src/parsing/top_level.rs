@@ -32,7 +32,7 @@ impl<'a> Input<'a> {
     pub fn parse_mod(&mut self) -> Result<(), ParseError> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
-        // TODO type sig (need way to indicate if it is an owned type (maybe do that in the function def?)) 
+        // TODO type sig (need way to indicate if it is an owned type) 
 
     fn parse_type_param_list(&mut self) -> Result<Vec<TypeParam>, ParseError> {
         fn constraint_list(input : &mut Input) -> Result<Vec<String>, ParseError> {
@@ -69,6 +69,40 @@ impl<'a> Input<'a> {
         }
 
         self.expect(">")?;
+
+        Ok(params)
+    }
+
+    fn parse_param_list(&mut self) -> Result<Vec<Param>, ParseError> {
+        // (mut blah : Type, blah : Type) // emtpy is allowed
+
+        self.expect("(")?;
+
+        let mut params = vec![];
+
+        loop {
+            // maybe mut
+            // if mut then definitely symbol
+            // if not mut then maybe symbol
+            // if symbol then definitely :
+            // maybe , if not then break
+
+            let name = self.parse_symbol()?;
+            match self.expect(":") {
+                Ok(_) => {
+                    let constraints = constraint_list(self)?;
+                    params.push( TypeParam { name, constraints } );
+                },
+                _ => params.push( TypeParam { name, constraints : vec![] } ),
+            }
+
+            match self.expect(",") {
+                Err(_) => break,
+                _ => (),
+            }
+        }
+
+        self.expect(")")?;
 
         Ok(params)
     }
