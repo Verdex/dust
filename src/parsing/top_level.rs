@@ -112,7 +112,27 @@ impl<'a> Input<'a> {
     }
 
     fn parse_fun_sig(&mut self) -> Result<FunSig, ParseError> {
-        Err(ParseError::EndOfFile("TODO".to_string()))
+
+        let name = self.parse_symbol()?;
+
+        let type_params = match self.parse_type_param_list() {
+            Ok(tps) => tps,
+            Err(_) => vec![],
+        };
+
+        let params = self.parse_param_list()?;
+
+        match self.expect("->") {
+            Ok(_) => {
+                let return_type = self.parse_type()?;
+                self.expect(";")?;
+                Ok( FunSig { name, type_params, params, return_type } )
+            },
+            Err(_) => {
+                self.expect(";")?;
+                Ok( FunSig { name, type_params, params, return_type: Type::Unit } )
+            },
+        }
     }
 }
 
@@ -214,6 +234,8 @@ mod test {
 
         assert_eq!( c_type_1, "D" );
 
+        assert_eq!( c.mutable, true );
+
         Ok(())
     }
 
@@ -223,6 +245,43 @@ mod test {
         let mut input = Input::new(&i);
         let mut u = input.parse_param_list()?;
         assert_eq!( u.len(), 0 );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_fun_sig_with_return_type() -> Result<(), ParseError> { 
+        let i = "function(blah : T) -> X; ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_fun_sig()?;
+
+        assert_eq!( u.name, "function" );
+        assert_eq!( u.type_params.len(), 0 );
+
+        match u.return_type {
+            Type::Simple(n) => assert_eq!( n, "X" ),
+            x => panic!( "Expected Simple but found {:?}", x ),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_fun_sig_with_type_param() -> Result<(), ParseError> { 
+        let i = "function<T>(blah : T); ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_fun_sig()?;
+
+        assert_eq!( u.name, "function" );
+        assert_eq!( u.type_params.len(), 1 );
+
+        assert_eq!( u.type_params[0].name, "T" );
+        assert_eq!( u.type_params[0].constraints.len(), 0 );
+
+        match u.return_type {
+            Type::Unit => (),
+            x => panic!( "Expected Unit but found {:?}", x ),
+        }
 
         Ok(())
     }
