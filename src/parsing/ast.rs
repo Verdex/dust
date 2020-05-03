@@ -46,6 +46,8 @@ pub struct FunSig {
 
 #[derive(Debug)]
 pub struct FunDef {
+    pub sig : FunSig,
+    // TODO defition
 }
 
 #[derive(Debug)]
