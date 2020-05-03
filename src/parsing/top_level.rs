@@ -189,6 +189,31 @@ mod test {
 
         assert_eq!( b.mutable, false );
 
+        let c = u.remove(0);
+
+        assert_eq!( c.name, "c" );
+
+        let (mut c_type_array) = match c.param_type {
+            Type::Tuple(types) => types,
+            x => panic!( "Expected Tuple but found {:?}", x ),
+        };
+
+        assert_eq!( c_type_array.len(), 2 );
+
+        let c_type_0 = match c_type_array.remove(0) {
+            Type::Simple(n) => n,
+            x => panic!( "Expected Simple but found {:?}", x ),
+        };
+
+        assert_eq!( c_type_0, "C" );
+
+        let c_type_1 = match c_type_array.remove(0) {
+            Type::Simple(n) => n,
+            x => panic!( "Expected Simple but found {:?}", x ),
+        };
+
+        assert_eq!( c_type_1, "D" );
+
         Ok(())
     }
 }
