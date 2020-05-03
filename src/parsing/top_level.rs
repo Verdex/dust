@@ -141,7 +141,7 @@ mod test {
     }
 
     #[test]
-    fn should_parse_param_list() -> Result<(), ParseError> { // TODO empty
+    fn should_parse_param_list() -> Result<(), ParseError> { 
         let i = "( mut a : A -> B, b : B<C>, mut c : (C, D) ) ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let mut u = input.parse_param_list()?;
@@ -213,6 +213,16 @@ mod test {
         };
 
         assert_eq!( c_type_1, "D" );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_emtpy_param_list() -> Result<(), ParseError> { 
+        let i = "() ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_param_list()?;
+        assert_eq!( u.len(), 0 );
 
         Ok(())
     }
