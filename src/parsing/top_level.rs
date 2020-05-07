@@ -33,6 +33,30 @@ impl<'a> Input<'a> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
         // TODO type sig (need way to indicate if it is an owned type) 
+    fn parse_struct_field_list(&mut self) -> Result<Vec<StructField>, ParseError> {
+        let mut fields = vec![];
+        
+        self.expect("{")?;
+
+        loop {
+            match self.parse_symbol() {
+                Ok(name) => {
+                    self.expect(":")?;
+                    let field_type = self.parse_type()?;
+                    fields.push( StructField { name, field_type } );
+                    match self.expect(",") {
+                        Ok(_) => (),
+                        Err(_) => break,
+                    }
+                },
+                Err(_) => break,
+            }
+        }
+
+        self.expect("}")?;
+
+        Ok(fields)
+    }
 
     fn parse_type_param_list(&mut self) -> Result<Vec<TypeParam>, ParseError> {
         fn constraint_list(input : &mut Input) -> Result<Vec<String>, ParseError> {

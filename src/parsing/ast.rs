@@ -74,3 +74,9 @@ pub enum Import {
     Everything,
     Item(String),
 }
+
+#[derive(Debug)]
+pub struct StructField {
+    pub name : String,
+    pub field_type : Type,
+}
