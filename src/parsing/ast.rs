@@ -80,3 +80,11 @@ pub struct StructField {
     pub name : String,
     pub field_type : Type,
 }
+
+#[derive(Debug)]
+pub struct StructDef {
+    pub name : String,
+    pub type_params : Vec<TypeParam>,
+    pub fields : Vec<StructField>,
+}
+

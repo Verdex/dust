@@ -16,8 +16,19 @@ impl<'a> Input<'a> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
 
-    pub fn parse_struct_def(&mut self) -> Result<(), ParseError> {
-        Err(ParseError::EndOfFile("TODO".to_string()))
+    pub fn parse_struct_def(&mut self) -> Result<StructDef, ParseError> {
+        self.expect("struct")?;
+        let name = self.parse_symbol()?;
+        match self.parse_type_param_list() {
+            Ok(type_params) => {
+                let fields = self.parse_struct_field_list()?;
+                Ok( StructDef { name, type_params, fields } ) 
+            },
+            Err(_) => {
+                let fields = self.parse_struct_field_list()?;
+                Ok( StructDef { name, type_params: vec![], fields } ) 
+            },
+        }
     }
 
     pub fn parse_trait_def(&mut self) -> Result<(), ParseError> {
@@ -33,6 +44,7 @@ impl<'a> Input<'a> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
         // TODO type sig (need way to indicate if it is an owned type) 
+
     fn parse_struct_field_list(&mut self) -> Result<Vec<StructField>, ParseError> {
         let mut fields = vec![];
         
