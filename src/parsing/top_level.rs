@@ -237,7 +237,7 @@ mod test {
 
         assert_eq!( c.name, "c" );
 
-        let (mut c_type_array) = match c.param_type {
+        let mut c_type_array = match c.param_type {
             Type::Tuple(types) => types,
             x => panic!( "Expected Tuple but found {:?}", x ),
         };
@@ -267,7 +267,7 @@ mod test {
     fn should_parse_emtpy_param_list() -> Result<(), ParseError> { 
         let i = "() ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
-        let mut u = input.parse_param_list()?;
+        let u = input.parse_param_list()?;
         assert_eq!( u.len(), 0 );
 
         Ok(())
@@ -277,7 +277,7 @@ mod test {
     fn should_parse_fun_sig_with_return_type() -> Result<(), ParseError> { 
         let i = "function(blah : T) -> X; ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
-        let mut u = input.parse_fun_sig()?;
+        let u = input.parse_fun_sig()?;
 
         assert_eq!( u.name, "function" );
         assert_eq!( u.type_params.len(), 0 );
@@ -294,7 +294,7 @@ mod test {
     fn should_parse_fun_sig_with_type_param() -> Result<(), ParseError> { 
         let i = "function<T>(blah : T); ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
-        let mut u = input.parse_fun_sig()?;
+        let u = input.parse_fun_sig()?;
 
         assert_eq!( u.name, "function" );
         assert_eq!( u.type_params.len(), 1 );
@@ -342,7 +342,7 @@ mod test {
     fn should_parse_empty_struct_field_list() -> Result<(), ParseError> { 
         let i = "{ } ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
-        let mut u = input.parse_struct_field_list()?;
+        let u = input.parse_struct_field_list()?;
 
         assert_eq!( u.len(), 0 );
 

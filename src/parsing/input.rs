@@ -1,8 +1,5 @@
 
-use std::str::{CharIndices};
-
 use super::parse_error::{ParseError};
-use super::ast::*;
 
 pub struct Input<'a> {
     data : &'a [(usize, char)] 
