@@ -309,4 +309,43 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn should_parse_struct_field_list() -> Result<(), ParseError> { 
+        let i = "{ a : a_type, b : b_type } ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_struct_field_list()?;
+
+        assert_eq!( u.len(), 2 );
+
+        let a = u.remove(0);
+        let b = u.remove(0);
+
+        assert_eq!( a.name, "a" );
+
+        match a.field_type {
+            Type::Simple(n) => assert_eq!( n, "a_type" ),
+            x => panic!( "Expected Simple but found {:?}", x ),
+        }
+
+        assert_eq!( b.name, "b" );
+
+        match b.field_type {
+            Type::Simple(n) => assert_eq!( n, "b_type" ),
+            x => panic!( "Expected Simple but found {:?}", x ),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_empty_struct_field_list() -> Result<(), ParseError> { 
+        let i = "{ } ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_struct_field_list()?;
+
+        assert_eq!( u.len(), 0 );
+
+        Ok(())
+    }
 }
