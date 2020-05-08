@@ -360,4 +360,30 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn should_parse_struct_field_def() -> Result<(), ParseError> { 
+        let i = "struct some { a : a_type, b : b_type } ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_struct_def()?;
+
+        assert_eq!( u.name, "some" );
+        assert_eq!( u.fields.len(), 2 );
+        assert_eq!( u.type_params.len(), 0 );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_struct_field_def_with_type_params() -> Result<(), ParseError> { 
+        let i = "struct some<Type : Constraint> { a : a_type, b : b_type } ".char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let u = input.parse_struct_def()?;
+
+        assert_eq!( u.name, "some" );
+        assert_eq!( u.fields.len(), 2 );
+        assert_eq!( u.type_params.len(), 1 );
+
+        Ok(())
+    }
 }
