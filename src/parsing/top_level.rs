@@ -13,6 +13,9 @@ impl<'a> Input<'a> {
     }
 
     pub fn parse_enum_def(&mut self) -> Result<(), ParseError> {
+        self.expect("enum")?;
+        let name = self.parse_symbol()?;
+        // TODO 
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
 
@@ -161,11 +164,9 @@ impl<'a> Input<'a> {
         match self.expect("->") {
             Ok(_) => {
                 let return_type = self.parse_type()?;
-                self.expect(";")?;
                 Ok( FunSig { name, type_params, params, return_type } )
             },
             Err(_) => {
-                self.expect(";")?;
                 Ok( FunSig { name, type_params, params, return_type: Type::Unit } )
             },
         }
@@ -287,7 +288,7 @@ mod test {
 
     #[test]
     fn should_parse_fun_sig_with_return_type() -> Result<(), ParseError> { 
-        let i = "function(blah : T) -> X; ".char_indices().collect::<Vec<(usize, char)>>();
+        let i = "function(blah : T) -> X ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_fun_sig()?;
 
@@ -304,7 +305,7 @@ mod test {
 
     #[test]
     fn should_parse_fun_sig_with_type_param() -> Result<(), ParseError> { 
-        let i = "function<T>(blah : T); ".char_indices().collect::<Vec<(usize, char)>>();
+        let i = "function<T>(blah : T) ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_fun_sig()?;
 
