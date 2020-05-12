@@ -15,8 +15,16 @@ impl<'a> Input<'a> {
     pub fn parse_enum_def(&mut self) -> Result<(), ParseError> {
         self.expect("enum")?;
         let name = self.parse_symbol()?;
-        // TODO 
-        Err(ParseError::EndOfFile("TODO".to_string()))
+
+        match self.parse_type_param_list() {
+            Ok(type_params) => {
+                self.expect("{")?;
+                 
+            },
+            Err(_) => {
+                self.expect("{")?;
+            },
+        }
     }
 
     pub fn parse_struct_def(&mut self) -> Result<StructDef, ParseError> {
@@ -43,8 +51,11 @@ impl<'a> Input<'a> {
         // TODO type def
     }
 
-    pub fn parse_mod(&mut self) -> Result<(), ParseError> {
-        Err(ParseError::EndOfFile("TODO".to_string()))
+    pub fn parse_mod(&mut self) -> Result<String, ParseError> {
+        self.expect("mod")?;
+        let name = self.parse_symbol()?;
+        self.expect(";")?;
+        Ok(name)
     }
         // TODO type sig (need way to indicate if it is an owned type) 
 

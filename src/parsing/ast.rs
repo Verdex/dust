@@ -7,22 +7,8 @@ pub struct Meta {
 
 #[derive(Debug)]
 pub struct Module {
-    pub type_defs : Vec<TypeDef>,
     pub fun_defs : Vec<FunDef>,
     pub uses : Vec<Use>,
-}
-
-#[derive(Debug)]
-pub struct TypeDef {
-    name : String,
-    type_params : Vec<String>,
-    type_constructors : Vec<TypeConstructor>,
-}
-
-#[derive(Debug)]
-pub struct TypeConstructor {
-    name : String,
-    types : Vec<Type>,
 }
 
 #[derive(Debug)]
@@ -88,3 +74,16 @@ pub struct StructDef {
     pub fields : Vec<StructField>,
 }
 
+#[derive(Debug)]
+pub enum EnumCase {
+    EmptyCase { name : String },
+    StructCase { name : String, fields : Vec<StructField> },
+    TypeCase { name : String, types : Vec<Type> },
+}
+
+#[derive(Debug)]
+pub struct EnumDef {
+    pub name : String,
+    pub type_params : Vec<TypeParam>,
+    pub cases : Vec<EnumCase>,
+}
