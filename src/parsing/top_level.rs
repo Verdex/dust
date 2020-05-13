@@ -12,17 +12,66 @@ impl<'a> Input<'a> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
 
-    pub fn parse_enum_def(&mut self) -> Result<(), ParseError> {
+    pub fn parse_enum_def(&mut self) -> Result<EnumDef, ParseError> {
+        fn parse_types( input : &mut Input ) -> Result<Vec<Type>, ParseError> {
+            let mut types = vec![];
+            input.expect("(")?;
+            loop {
+                let t = input.parse_type()?;
+                match input.expect(",") {
+                    Ok(_) => types.push(t), 
+                    Err(_) => break,
+                }
+            }
+            input.expect(")")?;
+            Ok(types)
+        }
+
+        fn parse_cases( input : &mut Input ) -> Result<Vec<EnumCase>, ParseError> {
+            input.expect("{")?; 
+
+            let mut cases = vec![];
+            loop {
+                let name = input.parse_symbol()?;    
+                
+                match parse_types(input) {
+                    Ok(types) => {
+                        cases.push( EnumCase::TypeCase { name, types } );
+                    },
+                    Err(_) => {
+                        match input.parse_struct_field_list() {
+                            Ok(fields) if fields.len() > 0 => {
+                                cases.push( EnumCase::StructCase { name, fields } );
+                            },
+                            _ => {
+                                cases.push( EnumCase::EmptyCase { name } );
+                            }
+                        }
+                    },
+                }
+
+                match input.expect(",") {
+                    Err(_) => break,
+                    _ => (),
+                }
+            }
+
+            input.expect("}")?;
+
+            Ok(cases)
+        }
+
         self.expect("enum")?;
         let name = self.parse_symbol()?;
 
         match self.parse_type_param_list() {
             Ok(type_params) => {
-                self.expect("{")?;
-                 
+                let cases = parse_cases(self)?;     
+                Ok( EnumDef { name, type_params, cases } )
             },
             Err(_) => {
-                self.expect("{")?;
+                let cases = parse_cases(self)?;     
+                Ok( EnumDef { name, type_params: vec![], cases } )
             },
         }
     }
