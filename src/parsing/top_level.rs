@@ -447,4 +447,72 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn should_parse_enum_field() -> Result<(), ParseError> { 
+        let i = r#"
+enum some {  
+    One,
+    Two,
+    Three
+} "#.char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_enum_def()?;
+
+        assert_eq!( u.name, "some" );
+        assert_eq!( u.cases.len(), 3 );
+        assert_eq!( u.type_params.len(), 0 );
+
+        let one = u.cases.remove(0);
+        let two = u.cases.remove(0);
+        let three = u.cases.remove(0);
+
+        match one {
+            EnumCase::EmptyCase { name } => assert_eq!( name, "One" ),
+            x => panic!( "expected empty case but found {:?}", x ),
+        }
+
+        match two {
+            EnumCase::EmptyCase { name } => assert_eq!( name, "Two" ),
+            x => panic!( "expected empty case but found {:?}", x ),
+        }
+
+        match three {
+            EnumCase::EmptyCase { name } => assert_eq!( name, "Three" ),
+            x => panic!( "expected empty case but found {:?}", x ),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_enum_field_def_with_type_params() -> Result<(), ParseError> { 
+        let i = r#"
+enum some<T : Constraint> {  
+    One
+} "#.char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_enum_def()?;
+
+        assert_eq!( u.name, "some" );
+        assert_eq!( u.cases.len(), 1 );
+        assert_eq!( u.type_params.len(), 1 );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_enum_field_def_with_no_cases() -> Result<(), ParseError> { 
+        let i = r#"
+enum some {  
+} "#.char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_enum_def()?;
+
+        assert_eq!( u.name, "some" );
+        assert_eq!( u.cases.len(), 0 );
+        assert_eq!( u.type_params.len(), 0 );
+
+        Ok(())
+    }
 }
