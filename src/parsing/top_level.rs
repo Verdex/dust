@@ -98,6 +98,7 @@ impl<'a> Input<'a> {
     pub fn parse_trait_def(&mut self) -> Result<(), ParseError> {
         Err(ParseError::EndOfFile("TODO".to_string()))
     }
+        // TODO type sig (need way to indicate if it is an owned type) 
 
     pub fn parse_impl_def(&mut self) -> Result<(), ParseError> {
         Err(ParseError::EndOfFile("TODO".to_string()))
@@ -110,7 +111,6 @@ impl<'a> Input<'a> {
         self.expect(";")?;
         Ok(name)
     }
-        // TODO type sig (need way to indicate if it is an owned type) 
 
     fn parse_struct_field_list(&mut self) -> Result<Vec<StructField>, ParseError> {
         let mut fields = vec![];
