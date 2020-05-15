@@ -32,7 +32,11 @@ impl<'a> Input<'a> {
 
             let mut cases = vec![];
             loop {
-                let name = input.parse_symbol()?;    
+
+                let name = match input.parse_symbol() {
+                    Ok(name) => name,
+                    Err(_) => break,
+                };
                 
                 match parse_types(input) {
                     Ok(types) => {
