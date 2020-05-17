@@ -87,3 +87,17 @@ pub struct EnumDef {
     pub type_params : Vec<TypeParam>,
     pub cases : Vec<EnumCase>,
 }
+
+#[derive(Debug)]
+pub enum TraitItem {
+    Type { name : String, constraints : Vec<String> },
+    Own { name : String, constraints : Vec<String> },
+    Fun(FunSig),
+}
+
+#[derive(Debug)]
+pub struct TraitDef {
+    pub name : String,
+    pub type_params : Vec<TypeParam>,
+    pub items : Vec<TraitItem>,
+}

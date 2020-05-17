@@ -95,10 +95,39 @@ impl<'a> Input<'a> {
         }
     }
 
-    pub fn parse_trait_def(&mut self) -> Result<(), ParseError> {
-        Err(ParseError::EndOfFile("TODO".to_string()))
+    pub fn parse_trait_def(&mut self) -> Result<TraitDef, ParseError> {
+        fn parse_trait_item_list(input : &mut Input) -> Result<Vec<TraitItem>, ParseError> {
+            Ok(vec![]) 
+        }
+        /*
+        pub trait Blarg<T> {
+            type A;
+            type A : B + C;
+            own A;
+            own A : B + C;
+            fn blah(self, blah : i32 ) -> Self;
+            fn x();
+            fn y() -> Self::A;
+
+        }
+
+        */
+
+        self.expect("trait")?;
+
+        let name = self.parse_symbol()?;
+
+        match self.parse_type_param_list() {
+            Ok(type_params) => { 
+                let items = parse_trait_item_list(self)?;
+                Ok(TraitDef { name, type_params, items })
+            },
+            Err(_) => {
+                let items = parse_trait_item_list(self)?;
+                Ok(TraitDef { name, type_params: vec![], items })
+            },
+        }
     }
-        // TODO type sig (need way to indicate if it is an owned type) 
 
     pub fn parse_impl_def(&mut self) -> Result<(), ParseError> {
         Err(ParseError::EndOfFile("TODO".to_string()))
