@@ -166,20 +166,20 @@ impl<'a> Input<'a> {
         Ok(fields)
     }
 
-    fn parse_type_param_list(&mut self) -> Result<Vec<TypeParam>, ParseError> {
-        fn constraint_list(input : &mut Input) -> Result<Vec<String>, ParseError> {
-            let mut cs = vec![];
-            loop {
-                let c = input.parse_symbol()?;
-                cs.push(c);
-                match input.expect("+") {
-                    Err(_) => break,
-                    _ => (),
-                }
+    fn parse_constraint_list(&mut self) -> Result<Vec<String>, ParseError> {
+        let mut cs = vec![];
+        loop {
+            let c = self.parse_symbol()?;
+            cs.push(c);
+            match self.expect("+") {
+                Err(_) => break,
+                _ => (),
             }
-            Ok(cs)
         }
+        Ok(cs)
+    }
 
+    fn parse_type_param_list(&mut self) -> Result<Vec<TypeParam>, ParseError> {
         self.expect("<")?;
 
         let mut params = vec![];
@@ -188,7 +188,7 @@ impl<'a> Input<'a> {
             let name = self.parse_symbol()?;
             match self.expect(":") {
                 Ok(_) => {
-                    let constraints = constraint_list(self)?;
+                    let constraints = self.parse_constraint_list()?;
                     params.push( TypeParam { name, constraints } );
                 },
                 _ => params.push( TypeParam { name, constraints : vec![] } ),
