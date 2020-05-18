@@ -97,7 +97,62 @@ impl<'a> Input<'a> {
 
     pub fn parse_trait_def(&mut self) -> Result<TraitDef, ParseError> {
         fn parse_trait_item_list(input : &mut Input) -> Result<Vec<TraitItem>, ParseError> {
-            Ok(vec![]) 
+            let mut items = vec![];
+            input.expect("{")?;
+            loop {
+                match input.parse_fun_sig() {
+                    Ok(sig) => {
+                        input.expect(";")?;
+                        items.push( TraitItem::Fun(sig) );
+                        continue;
+                    },
+                    Err(_) => (),
+                }
+
+                match input.expect("type") {
+                    Ok(_) => {
+                        let name = input.parse_symbol()?;
+                        match input.expect(":") {
+                            Ok(_) => {
+                                let constraints = input.parse_constraint_list()?;
+                                input.expect(";")?;
+                                items.push( TraitItem::Type { name, constraints } );
+                                continue;
+                            },
+                            Err(_) => {
+                                input.expect(";")?;
+                                items.push( TraitItem::Type { name, constraints: vec![] } );
+                                continue;
+                            },
+                        }
+                    },
+                    Err(_) => (),
+                }
+
+                match input.expect("own") {
+                    Ok(_) => {
+                        let name = input.parse_symbol()?;
+                        match input.expect(":") {
+                            Ok(_) => {
+                                let constraints = input.parse_constraint_list()?;
+                                input.expect(";")?;
+                                items.push( TraitItem::Own { name, constraints } );
+                                continue;
+                            },
+                            Err(_) => {
+                                input.expect(";")?;
+                                items.push( TraitItem::Own { name, constraints: vec![] } );
+                                continue;
+                            },
+                        }
+                    },
+                    Err(_) => (),
+                }
+
+                break;
+            }
+            input.expect("}")?;
+            Ok(items) 
         }
         /*
         pub trait Blarg<T> {
@@ -244,6 +299,7 @@ impl<'a> Input<'a> {
     }
 
     fn parse_fun_sig(&mut self) -> Result<FunSig, ParseError> {
+        self.expect("fun")?;
 
         let name = self.parse_symbol()?;
 
@@ -381,7 +437,7 @@ mod test {
 
     #[test]
     fn should_parse_fun_sig_with_return_type() -> Result<(), ParseError> { 
-        let i = "function(blah : T) -> X ".char_indices().collect::<Vec<(usize, char)>>();
+        let i = "fun function(blah : T) -> X ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_fun_sig()?;
 
@@ -398,7 +454,7 @@ mod test {
 
     #[test]
     fn should_parse_fun_sig_with_type_param() -> Result<(), ParseError> { 
-        let i = "function<T>(blah : T) ".char_indices().collect::<Vec<(usize, char)>>();
+        let i = "fun function<T>(blah : T) ".char_indices().collect::<Vec<(usize, char)>>();
         let mut input = Input::new(&i);
         let u = input.parse_fun_sig()?;
 
