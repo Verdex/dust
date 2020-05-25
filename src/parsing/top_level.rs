@@ -163,7 +163,6 @@ impl<'a> Input<'a> {
             fn blah(self, blah : i32 ) -> Self;
             fn x();
             fn y() -> Self::A;
-
         }
 
         */
@@ -635,6 +634,27 @@ enum some {
         assert_eq!( u.name, "some" );
         assert_eq!( u.cases.len(), 2 );
         assert_eq!( u.type_params.len(), 0 );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_parse_trait_def() -> Result<(), ParseError> {
+        let i = r#"
+trait Blarg<T> {
+    type A;
+    type A : B + C;
+    own A;
+    own A : B + C;
+    fun blah(self : Self, blah : i32) -> Self;
+    fun x();
+    fun y() -> Self::A;
+}
+ "#.char_indices().collect::<Vec<(usize, char)>>();
+        let mut input = Input::new(&i);
+        let mut u = input.parse_trait_def()?;
+
+        assert_eq!( u.name, "Blarg" );
 
         Ok(())
     }
