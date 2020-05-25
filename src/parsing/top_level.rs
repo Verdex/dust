@@ -154,18 +154,6 @@ impl<'a> Input<'a> {
             input.expect("}")?;
             Ok(items) 
         }
-        /*
-        pub trait Blarg<T> {
-            type A;
-            type A : B + C;
-            own A;
-            own A : B + C;
-            fn blah(self, blah : i32 ) -> Self;
-            fn x();
-            fn y() -> Self::A;
-        }
-
-        */
 
         self.expect("trait")?;
 
