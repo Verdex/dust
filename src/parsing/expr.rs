@@ -4,24 +4,31 @@ use super::parse_error::ParseError;
 use super::input::Input;
 
 impl<'a> Input<'a> {
+    pub fn parse_expr(&mut self) -> Result<Expr, ParseError> {
+        Ok(Expr::DString("blah".to_string()))
+    }
+    // TODO : Use
     // TODO : lambda
     // TODO : number
     // TODO : string
     // TODO : list
     // TODO : dictionary
     // TODO : loop
+    // TODO : while
     // TODO : foreach
     // TODO : match
     // TODO : let
     // TODO : mut
     // TODO : if
-    // TODO : assert / panic
+    // TODO : assert 
+    // TODO : panic
     // TODO : try
     // TODO : return
     // TODO : dot 
     // TODO : { }
     // TODO : ( )
-    // TODO : yield return (?)
+    // TODO : yield (?)
+    // TODO : slice
 }
 
 

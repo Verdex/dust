@@ -101,3 +101,9 @@ pub struct TraitDef {
     pub type_params : Vec<TypeParam>,
     pub items : Vec<TraitItem>,
 }
+
+#[derive(Debug)] 
+pub enum Expr {
+    Number(String),
+    DString(String),
+}
